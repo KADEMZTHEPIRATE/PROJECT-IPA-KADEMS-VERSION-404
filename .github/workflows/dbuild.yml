@@ -1,0 +1,32 @@
+name: Bouw Mijn Pizza Tower IPA
+on:
+  workflow_dispatch:
+
+jobs:
+  build-ios:
+    runs-on: macos-latest
+    steps:
+      - name: Alle bestanden inladen
+        uses: actions/checkout@v4
+
+      - name: Mappen controleren
+        run: |
+          mkdir -p assets
+          mkdir -p Payload
+          # Als data.win in de hoofdmap staat, verplaatsen we hem naar de juiste plek
+          mv data.win assets/data.win || true
+
+      - name: Bouw de iOS App in Xcode
+        run: |
+          xcodebuild -project GMLoader.xcodeproj -scheme GMLoader -sdk iphoneos -configuration Release -allowProvisioningUpdates CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO ONLY_ACTIVE_ARCH=NO archive -archivePath ./build/GMLoader.xcarchive
+          
+      - name: Maak het IPA-bestand (Zip)
+        run: |
+          cp -r build/GMLoader.xcarchive/Products/Applications/GMLoader.app Payload/ || true
+          zip -r PizzaTower.ipa Payload
+          
+      - name: Lever de IPA af als download link
+        uses: actions/upload-artifact@v4
+        with:
+          name: PizzaTower-iPhone-App
+          path: PizzaTower.ipa
