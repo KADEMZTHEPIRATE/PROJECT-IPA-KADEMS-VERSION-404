@@ -1,0 +1,36 @@
+name: Bouw Mijn Pizza Tower IPA
+on:
+  workflow_dispatch:
+
+jobs:
+  build-ios:
+    runs-on: macos-latest
+    steps:
+      - name: Code ophalen
+        uses: actions/checkout@v4
+
+      - name: Installeer de GameMaker Runner
+        run: |
+          git clone https://github.com engine
+
+      - name: Download game-bestanden uit Google Drive
+        run: |
+          python3 -m pip install gdown
+          gdown --id https://drive.google.com/file/d/1q_4E_Ma7WI5WK9pNxCDtXttv9SCnLYqF/view?usp=drive_link -O engine/assets/data.win
+
+      - name: Bouw de iOS App in Xcode
+        run: |
+          cd engine
+          xcodebuild -project GMLoader.xcodeproj -scheme GMLoader -sdk iphoneos -configuration Release archive -archivePath ./build/GMLoader.xcarchive
+          
+      - name: Maak het IPA-bestand (Zip)
+        run: |
+          mkdir -p Payload
+          cp -r engine/build/GMLoader.xcarchive/Products/Applications/GMLoader.app Payload/
+          zip -r PizzaTower.ipa Payload
+          
+      - name: Lever de IPA af als download link
+        uses: actions/upload-artifact@v4
+        with:
+          name: PizzaTower-iPhone-App
+          path: PizzaTower.ipa
